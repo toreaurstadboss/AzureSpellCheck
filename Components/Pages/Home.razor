@@ -1,5 +1,38 @@
 ﻿@page "/"
+@using AzureSpellCheckDemo.Models
+@using AzureSpellCheckDemo.Util
+@using Microsoft.Extensions.Configuration
+@using static AzureSpellCheckDemo.Util.BingSpellCheck
+@inject IConfiguration config
 
 <h1>Hello, world!</h1>
 
 Welcome to your new app.
+
+<EditForm Model="@Model" OnValidSubmit="RunSpellCheck">
+    <InputTextArea @bind-Value="@Model.InputText" />
+    <button type="submit">Run spell check</button>
+
+    <div>
+        @((MarkupString)Model.OutputText)
+    </div>
+</EditForm>
+
+
+@code {
+    SpellCheckViewModel Model = new();
+
+    public async Task<SpellCheckResponse?> RunSpellCheck()
+    {
+        if (string.IsNullOrWhiteSpace(Model.InputText))
+        {
+            Model.OutputText = "Please set input text";           
+        }
+
+        var spellCheck = await BingSpellCheck.RunSpellCheck(Model.InputText);
+        string? renderedSpellCheck = SpellCheckPresenter.BuildHtml(Model.InputText, spellCheck);
+        Model.OutputText = renderedSpellCheck ?? string.Empty;
+        return spellCheck;
+    }
+
+}
